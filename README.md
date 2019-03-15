@@ -1,6 +1,10 @@
 # enumerate_sudo_users
 Enumerate users with sudo access on system
 ```
+wget https://gist.githubusercontent.com/raresteak/ea537dc433c8f00cbd09c20e02c6c4fe/raw/c483f2eec536ecd9d8686ac7ddb7347a6b435ab5/enumerate_sudo_users -O /usr/local/sbin/enumerate_sudo_users && chmod 555 /usr/local/sbin/enumerate_sudo_users
+```
+
+```
 #!/bin/bash
 
 ###############################################################################
@@ -22,4 +26,13 @@ done
 }
 
 main
+```
+Run script as root.
+
+Sample output is username comma servername
+```
+root,server01
+jackn,server01
+dba,server01
+printop,server01
 ```
