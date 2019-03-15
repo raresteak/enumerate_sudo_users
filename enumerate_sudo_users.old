@@ -1,0 +1,52 @@
+#!/bin/bash
+######## Do not use, doesn't give complete results, use newer script
+######## Misses users with primary group memberships that have sudo access
+######## example if a user has primary group sudo, they do not show up
+######## in etc/group list.  the script misses them because it's only 
+######## looking at /etc/sudoers and /etc/sudoers.d/*.
+###############################################################################
+#Script Name	: enumerate_sudo_users
+#Description	: Check which users on system can sudo with some form of
+# 		  privileged access by looking in /etc/sudoers and 
+#		  /etc/sudoers.d/* files.
+#Author		: Github raresteak
+###############################################################################
+[[ "$TRACE" ]] && set -x
+[[ "$HEADER" ]] && echo "UserName,Type,Server" # Useful for putting in a spreadsheet
+IP=$(hostname -I)
+main() {
+if [[ $EUID -ne 0 ]]; then
+   	echo "This script must be run as root" 
+   	exit 1
+fi
+[[ "$TRACE" ]] && echo "Checking /etc/sudoers"
+for user in $(compgen -u); do
+	grep -w ^$user /etc/sudoers | awk -v awk_ip=$IP {'print $1",EXPLICIT,"awk_ip'} 
+done
+for group in $(compgen -g); do
+	if [[ $(grep -w ^%$group /etc/sudoers) ]]; then	
+	Users=$(grep -w ^$group /etc/group | awk -F: {'print $4'}) 
+	for Users_u in $(echo $Users | sed "s/,/ /g"); do
+		echo "$Users_u,GROUP-$group,$IP"
+	done
+	fi
+
+
+done
+for file in /etc/sudoers.d/*; do
+	[[ "$TRACE" ]] && echo "[INFO] checking $file" 
+	for user in $(compgen -u); do
+        	grep -w ^$user $file | awk -v awk_ip=$IP {'print $1",EXPLICIT,"awk_ip'}
+	done
+	for group in $(compgen -g); do
+        	if [[ $(grep -w ^%$group $file) ]]; then
+        		Users=$(grep -w ^$group /etc/group | awk -F: {'print $4'})
+        	for Users_u in $(echo $Users | sed "s/,/ /g"); do
+                	echo "$Users_u,GROUP-$group,$IP"
+        	done
+        	fi
+	done
+done
+}
+
+main
